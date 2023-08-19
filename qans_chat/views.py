@@ -11,4 +11,4 @@ def index(request):
         # TODO: initialize results
         result = {}
         return JsonResponse(result)
-    return render(request, "base/index.html")
+    return render(request, "index.html")
