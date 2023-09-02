@@ -35,7 +35,7 @@ def get_drf_urls() -> list:
     result = set()
     for link in links:
         path = link.get("href")
-        if path.endswith("announcement/"):
+        if path.endswith("announcement/") or path.startswith("#"):
             # Avoid version announcements
             continue
 
@@ -47,5 +47,4 @@ def get_drf_urls() -> list:
         if not url.endswith("/"):
             url += "/"
         result.add(url)
-        print(url)
-    return result
+    return list(result)
