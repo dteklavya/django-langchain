@@ -13,12 +13,16 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_openai import ChatOpenAI
 import os
 from dotenv import load_dotenv
+from time import sleep
+from bs4 import BeautifulSoup
+from typing import Union, Optional, Any
 
 
 load_dotenv()
 
 CHROMA_DB_DIRECTORY = os.environ.get("CHROMA_DB_DIRECTORY")
-MAX_LINKS_TO_SCRAPE = os, enumerate.get("MAX_LINKS_TO_SCRAPE")
+MAX_LINKS_TO_SCRAPE = os.environ.get("MAX_LINKS_TO_SCRAPE")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 
 class DjangLangRAG:
@@ -29,16 +33,29 @@ class DjangLangRAG:
         loader = WebBaseLoader(web_paths=self.urls)
         docs = loader.load()
 
-        splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
-        splits = splitter.split_documents(docs)
-        embeddings = OpenAIEmbeddings()
-
-        self.vectorStore = Chroma.from_documents(
-            documents=splits,
-            embedding=embeddings,
-            collection_name=collection_name,
-            persist_directory=CHROMA_DB_DIRECTORY,
+        splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+            chunk_size=1000, chunk_overlap=100
         )
+        splits = splitter.split_documents(docs)
+        total_docs = len(splits)
+        batch_size = 4
+        embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
+
+        for batch_start in range(0, total_docs, batch_size):
+            batch_end = min(batch_start + batch_size, total_docs)
+            batch_docs = splits[batch_start:batch_end]
+
+            print("Begin loading...")
+            Chroma.from_documents(
+                documents=batch_docs,
+                embedding=embeddings,
+                collection_name=collection_name,
+                persist_directory=CHROMA_DB_DIRECTORY,
+            )
+            print(f"Inserted {batch_end}/{total_docs} chunks. Sleeping for 60...")
+            sleep(60)
+
+        print(f"Completed inserting docs for {collection_name}")
 
     def answer(self, query: str, collection_name: str = "default"):
         embeddings = OpenAIEmbeddings()
