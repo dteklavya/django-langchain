@@ -25,12 +25,24 @@ MAX_LINKS_TO_SCRAPE = os.environ.get("MAX_LINKS_TO_SCRAPE")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 
+class CustomLoader(WebBaseLoader):
+    def _scrape(
+        self,
+        url: str,
+        parser: Union[str, None] = None,
+        bs_kwargs: dict = {},
+    ):
+        html_content = super()._scrape(url, parser)
+        main_content = html_content.find("div", id="main-content")
+        return BeautifulSoup(main_content.text, "html.parser", **bs_kwargs)
+
+
 class DjangLangRAG:
 
     def init_db(self, urls: list[str], collection_name: str = "default") -> None:
         self.urls = urls
 
-        loader = WebBaseLoader(web_paths=self.urls)
+        loader = CustomLoader(web_paths=self.urls)
         docs = loader.load()
 
         splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
