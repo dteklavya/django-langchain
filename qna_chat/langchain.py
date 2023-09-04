@@ -15,7 +15,8 @@ import os
 from dotenv import load_dotenv
 from time import sleep
 from bs4 import BeautifulSoup
-from typing import Union, Optional, Any
+from typing import Union
+from celery import shared_task
 
 
 load_dotenv()
@@ -39,7 +40,14 @@ class CustomLoader(WebBaseLoader):
 
 class DjangLangRAG:
 
+    @shared_task
     def init_db(self, urls: list[str], collection_name: str = "default") -> None:
+
+        # Check if DB already exists
+        if self.check_db():
+            print("Database exists. Exiting...")
+            return
+
         self.urls = urls
 
         loader = CustomLoader(web_paths=self.urls)
@@ -86,3 +94,6 @@ class DjangLangRAG:
         )
 
         return chain({"question": query}, return_only_outputs=True)
+
+    def check_db(self):
+        return os.path.exists(CHROMA_DB_DIRECTORY)

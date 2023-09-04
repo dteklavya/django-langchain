@@ -1,5 +1,7 @@
 from django.http import JsonResponse
 from django.shortcuts import render
+from .langchain import DjangLangRAG
+from .scrape_urls import get_drf_urls
 
 
 def index(request):
@@ -12,3 +14,18 @@ def index(request):
         result = {}
         return JsonResponse(result)
     return render(request, "index.html")
+
+
+def create_db(request):
+    drf_urls = get_drf_urls()
+
+    djanglang = DjangLangRAG()
+    if djanglang.check_db():
+        status = {
+            "exists": "database exists",
+            "message": ("Database exists"),
+        }
+        return JsonResponse(status)
+
+    djanglang.init_db.delay(drf_urls, "drf")
+    return JsonResponse({"status": "Building database..."})
