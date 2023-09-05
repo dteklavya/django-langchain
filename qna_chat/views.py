@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from .langchain import DjangLangRAG
 from .scrape_urls import get_drf_urls
+from celery.result import AsyncResult
 
 
 def index(request):
@@ -17,8 +18,6 @@ def index(request):
 
 
 def create_db(request):
-    drf_urls = get_drf_urls()
-
     djanglang = DjangLangRAG()
     if djanglang.check_db():
         status = {
@@ -27,5 +26,14 @@ def create_db(request):
         }
         return JsonResponse(status)
 
+    drf_urls = get_drf_urls()
+
     djanglang.init_db.delay(drf_urls, "drf")
     return JsonResponse({"status": "Building database..."})
+
+
+def check_task_status(request):
+    task_id = request.GET.get("task_id")
+    result = AsyncResult(task_id)
+    response_data = {"status": result.status, "result": result.result}
+    return JsonResponse(response_data)
