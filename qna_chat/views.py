@@ -28,8 +28,8 @@ def create_db(request):
 
     drf_urls = get_drf_urls()
 
-    djanglang.init_db.delay(drf_urls, "drf")
-    return JsonResponse({"status": "Building database..."})
+    result = djanglang.init_db.delay(drf_urls, "drf")
+    return JsonResponse({"status": "Building database...", "task_id": result.id})
 
 
 def check_task_status(request):
