@@ -12,6 +12,10 @@ def index(request):
     if request.method == "POST":
         query = request.POST.get("query")
         djanglang = DjangLangRAG()
+        if not djanglang.check_db():
+            return JsonResponse(
+                {"answer": "DB does not exists. Please initialize DB first."}
+            )
         result = djanglang.answer(query, collection_name="drf")
         return JsonResponse(result)
     return render(request, "index.html")
