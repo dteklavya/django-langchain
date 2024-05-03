@@ -85,7 +85,7 @@ class DjangLangRAG:
             persist_directory=CHROMA_DB_DIRECTORY,
         )
 
-        chat = ChatOpenAI(model_name="gpt-3.5", temperature=0)
+        chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
         chain = RetrievalQAWithSourcesChain.from_chain_type(
             llm=chat,
             chain_type="stuff",
